@@ -1,0 +1,96 @@
+import SwiftUI
+import FoundationModels
+
+struct FormulaOneIntelligenceView: View {
+    @State var intelligence: FormulaOneIntelligence = .init()
+
+    var body: some View {
+        ZStack {
+            background
+                .ignoresSafeArea()
+
+            ScrollView {
+                content
+            }
+        }
+        .onAppear {
+            Task {
+                await intelligence.generate()
+            }
+        }
+        .navigationTitle("Formula One")
+    }
+
+    var content: some View {
+        VStack {
+            VStack(alignment: .leading) {
+                HStack {
+                    Image(systemName: "sparkles")
+                    Text("Championship Insights")
+                }
+                .font(.title3.weight(.bold))
+
+                if intelligence.session?.isResponding ?? false {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                } else if let stats = intelligence.stats {
+                    Text(stats.summary ?? "")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background {
+                RoundedRectangle(cornerRadius: 16)
+                    .foregroundStyle(Material.ultraThin)
+            }
+
+            if let drivers = intelligence.stats?.drivers {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(drivers) { driver in
+                        HStack(spacing: 12) {
+                            Text((driver.position ?? 0).formatted())
+                                .frame(width: 20, alignment: .trailing)
+                                .monospacedDigit()
+
+                            Text(driver.name ?? "")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Text((driver.points ?? 0).formatted())
+                        }
+                        .font(.headline.weight(.semibold))
+
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background {
+                    RoundedRectangle(cornerRadius: 16)
+                        .foregroundStyle(Material.ultraThin)
+                }
+            }
+        }
+        .padding()
+        .animation(.smooth, value: intelligence.stats?.summary)
+    }
+
+    var background: some View {
+        Rectangle()
+            .foregroundStyle(
+                Design.glowyGradientBlend
+            )
+    }
+}
+
+#Preview {
+    FormulaOneIntelligenceView()
+        .colorScheme(.dark)
+}
+
+enum Design {
+    static let glowyGradientBlend = LinearGradient(colors: [
+        Color.red.mix(with: .bg, by: 0.5).opacity(0),
+        Color.red.mix(with: .bg, by: 0.5).opacity(0.25),
+        Color.red.mix(with: .bg, by: 0.5).opacity(0.5),
+        Color.red.mix(with: .bg, by: 0.5)
+    ], startPoint: .bottom, endPoint: .top)
+}
